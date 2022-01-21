@@ -1,0 +1,2 @@
+# BoltCompact
+compact bolt db
