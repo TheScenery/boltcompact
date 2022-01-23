@@ -1,4 +1,4 @@
-module boltcompact
+module github.com/TheScenery/BoltCompact
 
 go 1.17
 
