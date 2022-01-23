@@ -7,7 +7,10 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-const TxMaxSize = 65536
+type CompactOption struct {
+	TxMaxSize int64
+	Debug     bool
+}
 
 // walkFunc is the type of the function called for keys (buckets and "normal"
 // values) discovered by Walk. keys is the list of keys to descend to the bucket
@@ -45,7 +48,7 @@ func walk(db *bolt.DB, walkFn walkFunc) error {
 	})
 }
 
-func compactImp(dst, src *bolt.DB) error {
+func compactImp(dst, src *bolt.DB, opt *CompactOption) error {
 	// commit regularly, or we'll run out of memory for large datasets if using one transaction.
 	var size int64
 	tx, err := dst.Begin(true)
@@ -57,7 +60,7 @@ func compactImp(dst, src *bolt.DB) error {
 	if err := walk(src, func(keys [][]byte, k, v []byte, seq uint64) error {
 		// On each key/value, check if we have exceeded tx size.
 		sz := int64(len(k) + len(v))
-		if size+sz > TxMaxSize {
+		if size+sz > opt.TxMaxSize {
 			// Commit previous transaction.
 			if err := tx.Commit(); err != nil {
 				return err
@@ -114,13 +117,15 @@ func compactImp(dst, src *bolt.DB) error {
 	return tx.Commit()
 }
 
-func Compact(src, dst string) error {
+func Compact(src, dst string, opt *CompactOption) error {
 	// Ensure source file exists.
-	fi, err := os.Stat(src)
+	srcFileInfo, err := os.Stat(src)
 	if err != nil {
 		return err
 	}
-	initialSize := fi.Size()
+	if dst == "" {
+		return fmt.Errorf("dest path can not be empty")
+	}
 
 	// Open source database.
 	srcDB, err := bolt.Open(src, 0444, nil)
@@ -130,24 +135,34 @@ func Compact(src, dst string) error {
 	defer srcDB.Close()
 
 	// Open destination database.
-	dstDB, err := bolt.Open(dst, fi.Mode(), nil)
+	dstDB, err := bolt.Open(dst, srcFileInfo.Mode(), nil)
 	if err != nil {
 		return err
 	}
 	defer dstDB.Close()
 
-	if err := compactImp(dstDB, srcDB); err != nil {
+	if opt == nil {
+		opt = &CompactOption{
+			TxMaxSize: 65536,
+		}
+	}
+
+	if err := compactImp(dstDB, srcDB, opt); err != nil {
 		return err
 	}
 
 	// Report stats on new size.
-	fi, err = os.Stat(dst)
+	dstFileInfo, err := os.Stat(dst)
 	if err != nil {
 		return err
-	} else if fi.Size() == 0 {
+	} else if dstFileInfo.Size() == 0 {
 		return fmt.Errorf("zero db size")
 	}
-	fmt.Printf("%d -> %d bytes (gain=%.2fx)\n", initialSize, fi.Size(), float64(initialSize)/float64(fi.Size()))
+	if opt.Debug {
+		initialSize := srcFileInfo.Size()
+		compactedSize := dstFileInfo.Size()
+		fmt.Printf("%d -> %d bytes (gain=%.2fx)\n", initialSize, compactedSize, float64(initialSize)/float64(compactedSize))
+	}
 
 	return nil
 }
