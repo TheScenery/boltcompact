@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 type CompactOption struct {

@@ -1,10 +1,10 @@
 package boltcompact
 
 import (
-	"os"
+	"io/fs"
 	"testing"
 
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 func TestCompact(t *testing.T) {
@@ -15,7 +15,7 @@ func TestCompact(t *testing.T) {
 		t.Fatal("Src path need check empty")
 	}
 
-	srcDB, err := bolt.Open(srcPath, os.ModePerm, nil)
+	srcDB, err := bolt.Open(srcPath, fs.ModePerm, nil)
 	if err != nil {
 		t.Fatal("db open error")
 	}
