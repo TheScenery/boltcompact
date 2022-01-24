@@ -5,7 +5,7 @@ bolt client command "compact" to lib
 
 ## Installing
 ```shell
-go get github.com/TheScenery/BoltCompact
+go get github.com/TheScenery/boltcompact
 ```
 ## How to use
 ```go
