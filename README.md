@@ -10,7 +10,7 @@ go get github.com/TheScenery/BoltCompact
 ## How to use
 ```go
 import (
-	boltcompact "github.com/TheScenery/BoltCompact"
+	boltcompact "github.com/TheScenery/boltcompact"
 )
 
 func main() {
