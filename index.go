@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	bolt "go.etcd.io/bbolt"
+	"github.com/boltdb/bolt"
 )
 
 type CompactOption struct {
-	TxMaxSize int64
+	TxMaxSize int64 // Specifies the maximum size of individual transactions.Defaults to 64KB.
 	Debug     bool
 }
 
@@ -60,7 +60,7 @@ func compactImp(dst, src *bolt.DB, opt *CompactOption) error {
 	if err := walk(src, func(keys [][]byte, k, v []byte, seq uint64) error {
 		// On each key/value, check if we have exceeded tx size.
 		sz := int64(len(k) + len(v))
-		if size+sz > opt.TxMaxSize {
+		if size+sz > opt.TxMaxSize && opt.TxMaxSize != 0 {
 			// Commit previous transaction.
 			if err := tx.Commit(); err != nil {
 				return err

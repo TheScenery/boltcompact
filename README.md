@@ -1,5 +1,5 @@
 # BoltCompact
-compact [bolt db](https://github.com/etcd-io/bbolt) to save storage usage
+compact [bolt db](https://github.com/boltdb/bolt) to save storage usage
 
 bolt client command "compact" to lib
 
